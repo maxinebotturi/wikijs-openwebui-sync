@@ -1,0 +1,4 @@
+# /etc/cron.d/wiki-rag
+# Every hour: export the wiki to .md files, then sync the folder to the Open WebUI knowledge base.
+# Secrets live in .env (see .env.example), not here.
+0 * * * *  user  cd /home/user/wikijs-openwebui-sync && . ./.env && export WIKI_URL WIKI_TOKEN OUT_DIR && python export_wiki.py && oikb sync "$OUT_DIR" --kb-id "$KB_ID" >> /var/log/wiki-rag.log 2>&1

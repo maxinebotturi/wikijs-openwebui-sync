@@ -1,0 +1,4 @@
+.env
+wiki_md/
+__pycache__/
+*.pyc
