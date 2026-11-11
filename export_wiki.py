@@ -78,10 +78,7 @@ def export():
         # middle of a long page would otherwise lose the reference
         content = re.sub(
             r"^(##\s+.*)$",
-            lambda m: m.group(1) + "
-
-*" + SOURCE_MARKER + " : " + url + "*
-",
+            lambda m: m.group(1) + "\n\n*" + SOURCE_MARKER + " : " + url + "*\n",
             content,
             flags=re.MULTILINE,
         )
