@@ -105,6 +105,18 @@ cross-lingual layer works.
 If the Wiki.js **Storage > Git** module is enabled, every page is already a `.md` file in a
 repository. Point oikb at that folder and you do not need this script at all.
 
+## Running it without a GPU
+
+The original deployment runs on a CPU-only virtual machine, which works for a documentation
+assistant as long as a few things are set right at the hypervisor level. The CPU type exposed to
+the VM must be the host CPU, not a generic model, otherwise the guest does not see AVX-512 and
+VNNI and inference is several times slower. On a dual-socket host, pin all the vCPUs to a single
+socket with NUMA enabled, so that model weights are not shuffled between the two processors'
+memory controllers. Give the VM enough RAM to hold the generation model, the embedding model and
+the context window at once, and disable memory ballooning, because a model that gets partly
+swapped out is unusable. On the Ollama side, `OLLAMA_MAX_VRAM=0` forces everything into system
+memory and `OLLAMA_CONTEXT_LENGTH` sets the context window, 32768 in the original setup.
+
 ## Going further
 
 - Real-time updates: `oikb watch` on the export folder, or the oikb daemon with a webhook, instead of cron.
