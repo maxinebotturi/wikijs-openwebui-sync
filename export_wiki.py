@@ -17,6 +17,7 @@ Usage:
 """
 
 import os
+import re
 import sys
 
 import requests
@@ -24,6 +25,10 @@ import requests
 WIKI_URL   = os.environ.get("WIKI_URL", "https://wiki.example.org").rstrip("/")
 WIKI_TOKEN = os.environ.get("WIKI_TOKEN", "")
 OUT_DIR    = os.environ.get("OUT_DIR", "./wiki_md")
+# Marker injected under every level-2 heading so that each chunk keeps its
+# source URL after the RAG splitter has cut the page. The RAG template in
+# examples/rag_template.txt tells the model to cite it.
+SOURCE_MARKER = os.environ.get("SOURCE_MARKER", "Source de ce paragraphe")
 
 
 def gql(query, variables=None):
@@ -67,8 +72,21 @@ def export():
         # header: title + source URL, so the RAG answer can cite the page
         url = f"{WIKI_URL}/{p['path'].lstrip('/')}"
         header = f"{p['title']}\n\nSource : {url}\n\n---\n\n"
+        content = get_content(p["id"])
+
+        # repeat the source URL under each "## " heading: chunks made from the
+        # middle of a long page would otherwise lose the reference
+        content = re.sub(
+            r"^(##\s+.*)$",
+            lambda m: m.group(1) + "
+
+*" + SOURCE_MARKER + " : " + url + "*
+",
+            content,
+            flags=re.MULTILINE,
+        )
         with open(dest, "w", encoding="utf-8") as f:
-            f.write(header + get_content(p["id"]))
+            f.write(header + content)
 
         written.add(os.path.abspath(dest))
         print(f"  written  {rel}")
