@@ -13,7 +13,7 @@ Wiki.js  -->  export_wiki.py  -->  folder of .md  -->  oikb  -->  Knowledge Base
 | Piece | Role |
 |---|---|
 | **Wiki.js** | the source of truth. Read through its GraphQL API. |
-| **export_wiki.py** (this repo) | exports every page to a `.md` file, with the title and the source URL on top so the answer can cite it. Removes orphaned files when a page is deleted. |
+| **export_wiki.py** (this repo) | exports every page to a `.md` file, with the title and the source URL on top, and the same URL repeated under every level-2 heading so that each chunk still carries its source after splitting. Removes orphaned files when a page is deleted. |
 | **[oikb](https://pypi.org/project/oikb/)** | syncs a folder to an Open WebUI knowledge base. Incremental (SHA-256 diff): adds what is new, updates what changed, deletes what disappeared. |
 | **Open WebUI** | chat interface and RAG engine (chunking, embeddings, retrieval, generation). |
 | **bge-m3** | multilingual embedding model served by Ollama. It is what makes a French question find a page written in English. |
@@ -41,7 +41,12 @@ ollama pull bge-m3
 **2. Configure Open WebUI, before the first import.**
 *Admin > Settings > Documents*: Embedding Engine = Ollama, Embedding Model = bge-m3.
 Documents are vectorised when they enter the knowledge base, so changing the embedder later
-means re-indexing everything.
+means re-indexing everything. In the same page, chunk size 2500, chunk min size 1000 and
+overlap 200 work well for documentation and configuration files, which lose their meaning
+when cut too small.
+Under *Retrieval*, replace the RAG template with [`examples/rag_template.txt`](examples/rag_template.txt):
+it forces the model to cite the `Source de ce paragraphe` URL that the export script injects
+under every heading, so every statement in an answer links back to the wiki page.
 Then create a knowledge base (*Workspace > Knowledge*), note its ID from the URL
 (`/knowledge/<id>`), and create an API key (*Settings > Account > API Keys*).
 
@@ -54,6 +59,7 @@ pip install -r requirements.txt
 export WIKI_URL="https://wiki.example.org"
 export WIKI_TOKEN="your_wikijs_api_token"
 export OUT_DIR="$HOME/wiki_md"
+# optional: export SOURCE_MARKER="Source" to change the marker text (keep the RAG template in sync)
 python export_wiki.py
 ```
 
